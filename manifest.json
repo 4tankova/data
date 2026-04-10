@@ -1,0 +1,30 @@
+{
+  "name": "Нагадувач важливих дат",
+  "short_name": "Нагадувач",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "uk",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%2338bdf8'/%3E%3Ctext x='100' y='135' font-size='120' text-anchor='middle' fill='%23fff'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%2338bdf8'/%3E%3Ctext x='100' y='135' font-size='120' text-anchor='middle' fill='%23fff'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Перевірити зараз",
+      "short_name": "Перевірити",
+      "description": "Оновити нагадування",
+      "url": "./index.html?check=1"
+    }
+  ]
+}

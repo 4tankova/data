@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Нагадувач важливих дат</title>
+
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+
+  <!-- iOS підтримка -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  <meta name="apple-mobile-web-app-title" content="Нагадувач" />
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' rx='40' fill='%2338bdf8'/%3E%3Ctext x='100' y='135' font-size='120' text-anchor='middle' fill='%23fff'%3E%F0%9F%93%85%3C/text%3E%3C/svg%3E" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .event-card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .event-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-50 min-h-screen">
+  <main class="max-w-4xl mx-auto px-4 py-8">
+    <!-- Hero -->
+    <section class="text-center mb-10">
+      <div class="inline-flex items-center gap-3 bg-slate-800/70 text-slate-300 text-sm font-medium px-5 py-2 rounded-3xl mb-4 border border-slate-700">
+        📅 Нагадувач важливих дат
+      </div>
+      <h1 class="text-4xl md:text-5xl font-bold tracking-tighter mb-3">Не пропусти жодної дати</h1>
+      <p class="text-slate-400 text-lg max-w-md mx-auto">Сповіщення за 2 дні, за 1 день і в сам день. Працює офлайн.</p>
+    </section>
+
+    <!-- Toolbar -->
+    <div class="flex flex-wrap gap-3 justify-center mb-8">
+      <button id="enableNotificationsBtn" 
+              class="bg-emerald-500 hover:bg-emerald-600 text-emerald-950 px-8 py-4 rounded-3xl font-bold text-base shadow-xl flex items-center gap-2 transition-all hover:-translate-y-px active:scale-95">
+        🔔 Увімкнути сповіщення
+      </button>
+      <button id="checkNowBtn" 
+              class="bg-slate-700 hover:bg-slate-600 px-8 py-4 rounded-3xl font-bold text-base shadow-xl flex items-center gap-2 transition-all hover:-translate-y-px active:scale-95">
+        🔄 Перевірити зараз
+      </button>
+      <button id="testSoundBtn" 
+              class="bg-slate-700 hover:bg-slate-600 px-8 py-4 rounded-3xl font-bold text-base shadow-xl flex items-center gap-2 transition-all hover:-translate-y-px active:scale-95">
+        🔊 Перевірити звук
+      </button>
+      <button id="addEventBtn" 
+              class="bg-sky-400 hover:bg-sky-500 text-slate-950 px-8 py-4 rounded-3xl font-bold text-base shadow-xl flex items-center gap-2 transition-all hover:-translate-y-px active:scale-95">
+        + Додати свою подію
+      </button>
+      <button id="installBtn" 
+              class="hidden bg-amber-400 hover:bg-amber-500 text-slate-950 px-8 py-4 rounded-3xl font-bold text-base shadow-xl flex items-center gap-2 transition-all hover:-translate-y-px active:scale-95">
+        📲 Встановити на головний екран
+      </button>
+    </div>
+
+    <!-- Status -->
+    <div id="statusText" class="bg-slate-800/70 border border-slate-700 text-amber-300 text-center rounded-3xl px-6 py-4 mb-6 text-sm font-medium"></div>
+
+    <!-- Alert -->
+    <div id="alertBox" class="hidden bg-gradient-to-r from-amber-400 to-orange-500 text-slate-900 rounded-3xl px-6 py-5 font-semibold text-lg leading-relaxed mb-8 shadow-2xl"></div>
+
+    <!-- Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div class="bg-slate-800/70 border border-slate-700 rounded-3xl p-6 text-center">
+        <strong id="todayCount" class="block text-5xl font-bold text-rose-400">0</strong>
+        <span class="text-slate-400 text-sm uppercase tracking-widest">Сьогодні</span>
+      </div>
+      <div class="bg-slate-800/70 border border-slate-700 rounded-3xl p-6 text-center">
+        <strong id="tomorrowCount" class="block text-5xl font-bold text-amber-400">0</strong>
+        <span class="text-slate-400 text-sm uppercase tracking-widest">Завтра</span>
+      </div>
+      <div class="bg-slate-800/70 border border-slate-700 rounded-3xl p-6 text-center">
+        <strong id="twoDaysCount" class="block text-5xl font-bold text-emerald-400">0</strong>
+        <span class="text-slate-400 text-sm uppercase tracking-widest">Через 2 дні</span>
+      </div>
+    </div>
+
+    <!-- Search -->
+    <div class="mb-6">
+      <input id="searchInput" type="text" placeholder="🔎 Пошук по подіях..." 
+             class="w-full bg-slate-800 border border-slate-700 focus:border-sky-400 rounded-3xl px-6 py-4 text-base placeholder:text-slate-400 outline-none">
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Термінові нагадування -->
+      <div class="bg-slate-900/80 border border-slate-700 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+        <h2 class="text-2xl font-semibold mb-5 flex items-center gap-2"><span class="text-rose-400">🚨</span> Термінові нагадування</h2>
+        <div id="urgentEvents" class="space-y-4"></div>
+      </div>
+
+      <!-- Найближчі події -->
+      <div class="bg-slate-900/80 border border-slate-700 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+        <h2 class="text-2xl font-semibold mb-5 flex items-center gap-2"><span class="text-emerald-400">📅</span> Найближчі події</h2>
+        <div id="upcomingEvents" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- Усі події -->
+    <div class="mt-8 bg-slate-900/80 border border-slate-700 backdrop-blur-xl rounded-3xl p-6 shadow-2xl">
+      <h2 class="text-2xl font-semibold mb-5">Усі події</h2>
+      <div id="allEvents" class="space-y-4"></div>
+      <p class="text-slate-400 text-sm mt-6 text-center">Події із зазначеним роком автоматично показують річницю.</p>
+    </div>
+
+    <div class="text-center text-slate-400 text-sm mt-12">
+      Для найкращої роботи додай сайт на головний екран.<br>
+      Працює офлайн • Android / iPhone / Windows
+    </div>
+  </main>
+
+  <!-- Modal для додавання події -->
+  <div id="addModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-[100]">
+    <div class="bg-slate-900 rounded-3xl p-8 w-full max-w-md mx-4 shadow-2xl">
+      <h2 class="text-2xl font-bold mb-6">Додати свою подію</h2>
+      <form id="addForm" class="space-y-6">
+        <input id="titleInput" type="text" required placeholder="Назва події" 
+               class="w-full bg-slate-800 border border-transparent focus:border-sky-400 rounded-3xl px-6 py-4 text-base outline-none">
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 text-sm mb-2">День</label>
+            <input id="dayInput" type="number" min="1" max="31" value="15" 
+                   class="w-full bg-slate-800 border border-transparent focus:border-sky-400 rounded-3xl px-6 py-4 text-base outline-none">
+          </div>
+          <div>
+            <label class="block text-slate-400 text-sm mb-2">Місяць</label>
+            <select id="monthInput" class="w-full bg-slate-800 border border-transparent focus:border-sky-400 rounded-3xl px-6 py-4 text-base outline-none">
+              <option value="1">Січень</option>
+              <option value="2">Лютий</option>
+              <option value="3">Березень</option>
+              <option value="4" selected>Квітень</option>
+              <option value="5">Травень</option>
+              <option value="6">Червень</option>
+              <option value="7">Липень</option>
+              <option value="8">Серпень</option>
+              <option value="9">Вересень</option>
+              <option value="10">Жовтень</option>
+              <option value="11">Листопад</option>
+              <option value="12">Грудень</option>
+            </select>
+          </div>
+        </div>
+
+        <input id="startYearInput" type="number" placeholder="Рік початку (для розрахунку річниці)" 
+               class="w-full bg-slate-800 border border-transparent focus:border-sky-400 rounded-3xl px-6 py-4 text-base outline-none">
+
+        <div class="flex gap-3 pt-4">
+          <button type="button" id="cancelAdd" 
+                  class="flex-1 py-4 rounded-3xl font-medium border border-slate-700 hover:bg-slate-800">Скасувати</button>
+          <button type="submit" 
+                  class="flex-1 py-4 bg-sky-400 hover:bg-sky-500 text-slate-950 font-semibold rounded-3xl">Зберегти подію</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // === АКТУАЛЬНИЙ СПИСОК ПОДІЙ ===
+    let events = [
+      { title: "131 окремий розвідувальний батальйон імені полковника Євгена Коновальця (А1445)", day: 1, month: 4, startYear: 2015 },
+      { title: "День створення НАТО", day: 4, month: 4 },
+      { title: "67 окрема механізована бригада (А4123)", day: 5, month: 4 },
+      { title: "День фахівців топографічної служби ЗСУ", day: 8, month: 4 },
+      { title: "День працівників ТЦК та СП", day: 8, month: 4 },
+      { title: "Великдень", day: 12, month: 4 },
+      { title: "День працівників ракетно-космічної галузі України", day: 12, month: 4 },
+      { title: "День працівника оборонно-промислового комплексу України", day: 13, month: 4 },
+      { title: "241 окрема бригада територіальної оборони (А4076)", day: 14, month: 4, startYear: 2022 },
+      { title: "Річниця початку АТО", day: 14, month: 4 },
+      { title: "8 прикордонний загін (1491)", day: 15, month: 4, startYear: 2001 },
+      { title: "65 окрема механізована бригада \"Великий луг\" (А7013)", day: 16, month: 4, startYear: 2022 },
+      { title: "День Військової служби правопорядку ЗСУ", day: 19, month: 4 },
+      { title: "39 окремий батальйон безпілотних систем (А4047)", day: 19, month: 4, startYear: 2022 },
+      { title: "1513 артилерійський склад боєприпасів (А1319)", day: 20, month: 4, startYear: 1978 },
+      { title: "Всеукраїнський день психолога", day: 23, month: 4 },
+      { title: "День Чорнобильської трагедії", day: 26, month: 4 },
+      { title: "94 окремий протитанковий батальйон (А5013)", day: 29, month: 4, startYear: 2024 },
+      { title: "День прикордонника України", day: 30, month: 4 },
+      { title: "23 центр забезпечення охорони державної таємниці (А1629)", day: 30, month: 4, startYear: 2015 },
+      { title: "66 пункт управління системою зв’язку та інформаційними системами", day: 30, month: 4, startYear: 2015 },
+      { title: "16 окрема бригада підтримки (А2558)", day: 30, month: 4, startYear: 2018 }
+    ];
+
+    let customEvents = JSON.parse(localStorage.getItem("customEvents") || "[]");
+    let searchTerm = "";
+    let deferredPrompt = null;
+
+    // === DOM ЕЛЕМЕНТИ ===
+    const statusText = document.getElementById("statusText");
+    const alertBox = document.getElementById("alertBox");
+    const urgentEventsEl = document.getElementById("urgentEvents");
+    const upcomingEventsEl = document.getElementById("upcomingEvents");
+    const allEventsEl = document.getElementById("allEvents");
+    const todayCountEl = document.getElementById("todayCount");
+    const tomorrowCountEl = document.getElementById("tomorrowCount");
+    const twoDaysCountEl = document.getElementById("twoDaysCount");
+    const searchInput = document.getElementById("searchInput");
+    const addModal = document.getElementById("addModal");
+    const addForm = document.getElementById("addForm");
+    const installBtn = document.getElementById("installBtn");
+
+    // === ДОПОМІЖНІ ФУНКЦІЇ ===
+    function pad(value) {
+      return String(value).padStart(2, "0");
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function formatDate(day, month) {
+      return `${pad(day)}.${pad(month)}`;
+    }
+
+    function getNextOccurrence(event) {
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      let eventDate = new Date(currentYear, event.month - 1, event.day);
+
+      if (startOfDay(eventDate) < startOfDay(now)) {
+        eventDate = new Date(currentYear + 1, event.month - 1, event.day);
+      }
+      return eventDate;
+    }
+
+    function daysBetween(now, target) {
+      const oneDay = 1000 * 60 * 60 * 24;
+      return Math.round((startOfDay(target) - startOfDay(now)) / oneDay);
+    }
+
+    function getAnniversary(event, occurrenceYear) {
+      if (!event.startYear) return null;
+      return occurrenceYear - event.startYear;
+    }
+
+    function getSortedEvents() {
+      const allEvents = [...events, ...customEvents];
+      return allEvents
+        .map((event) => {
+          const nextDate = getNextOccurrence(event);
+          const diffDays = daysBetween(new Date(), nextDate);
+          const anniversary = getAnniversary(event, nextDate.getFullYear());
+          return { ...event, nextDate, diffDays, anniversary };
+        })
+        .sort((a, b) => a.nextDate - b.nextDate || a.title.localeCompare(b.title, "uk"));
+    }
+
+    function getBadgeText(diffDays) {
+      if (diffDays === 0) return "Сьогодні";
+      if (diffDays === 1) return "Завтра";
+      if (diffDays === 2) return "Через 2 дні";
+      return `Через ${diffDays} дн.`;
+    }
+
+    function getEventCardClasses(diffDays) {
+      let base = "event-card bg-slate-800 border border-slate-700 rounded-3xl p-6 shadow-xl flex flex-col";
+      if (diffDays === 0) return base + " border-l-[6px] border-rose-500 bg-rose-500/10";
+      if (diffDays === 1) return base + " border-l-[6px] border-amber-500 bg-amber-500/10";
+      if (diffDays === 2) return base + " border-l-[6px] border-emerald-500 bg-emerald-500/10";
+      return base + " border-l-[6px] border-sky-400";
+    }
+
+    function getBadgeClasses(diffDays) {
+      if (diffDays === 0) return "px-5 py-1 text-xs font-bold rounded-3xl bg-rose-500 text-white";
+      if (diffDays === 1) return "px-5 py-1 text-xs font-bold rounded-3xl bg-amber-400 text-slate-950";
+      if (diffDays === 2) return "px-5 py-1 text-xs font-bold rounded-3xl bg-emerald-500 text-white";
+      return "px-5 py-1 text-xs font-bold rounded-3xl bg-slate-700 text-slate-200";
+    }
+
+    function renderEventCard(event) {
+      let anniversaryText = event.anniversary !== null && event.anniversary >= 0 
+        ? `<br><strong class="text-emerald-400">Річниця:</strong> ${event.anniversary} рік` 
+        : "";
+
+      return `
+        <div class="${getEventCardClasses(event.diffDays)}">
+          <div class="flex justify-between items-start">
+            <div class="text-xl font-semibold leading-tight">${event.title}</div>
+            <span class="${getBadgeClasses(event.diffDays)}">${getBadgeText(event.diffDays)}</span>
+          </div>
+          <div class="mt-4 text-slate-300 text-base">
+            <strong>Дата:</strong> ${formatDate(event.day, event.month)}
+            ${anniversaryText}
+            <br><strong>Залишилось:</strong> ${event.diffDays} дн.
+          </div>
+        </div>`;
+    }
+
+    function renderLists(sortedEvents) {
+      const filtered = sortedEvents.filter(e => 
+        e.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+
+      const urgent = filtered.filter(e => e.diffDays <= 2);
+      urgentEventsEl.innerHTML = urgent.length 
+        ? urgent.map(renderEventCard).join("") 
+        : `<div class="text-slate-400 py-12 text-center">Немає термінових нагадувань</div>`;
+
+      const upcoming = filtered.filter(e => e.diffDays <= 30).slice(0, 10);
+      upcomingEventsEl.innerHTML = upcoming.length 
+        ? upcoming.map(renderEventCard).join("") 
+        : `<div class="text-slate-400 py-12 text-center">Немає найближчих подій</div>`;
+
+      allEventsEl.innerHTML = filtered.length 
+        ? filtered.map(renderEventCard).join("") 
+        : `<div class="text-slate-400 py-12 text-center">Нічого не знайдено</div>`;
+    }
+
+    function updateCounters(sortedEvents) {
+      const todayCount = sortedEvents.filter(e => e.diffDays === 0).length;
+      const tomorrowCount = sortedEvents.filter(e => e.diffDays === 1).length;
+      const twoDaysCount = sortedEvents.filter(e => e.diffDays === 2).length;
+
+      todayCountEl.textContent = todayCount;
+      tomorrowCountEl.textContent = tomorrowCount;
+      twoDaysCountEl.textContent = twoDaysCount;
+    }
+
+    function showAlert(messages) {
+      if (!messages.length) {
+        alertBox.classList.add("hidden");
+        return;
+      }
+      alertBox.classList.remove("hidden");
+      alertBox.innerHTML = messages.join("<br><br>");
+    }
+
+    function playBeep() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioCtx();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+        gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.25, audioContext.currentTime + 0.02);
+        gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.55);
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.55);
+      } catch (e) {
+        console.log("Звук не відтворено");
+      }
+    }
+
+    function updateNotificationStatusText() {
+      if (!("Notification" in window)) {
+        statusText.textContent = "Статус: браузер не підтримує сповіщення";
+        return;
+      }
+      if (Notification.permission === "granted") {
+        statusText.textContent = "Статус: сповіщення дозволені ✅";
+      } else if (Notification.permission === "denied") {
+        statusText.textContent = "Статус: сповіщення заблоковані";
+      } else {
+        statusText.textContent = "Статус: натисни «Увімкнути сповіщення»";
+      }
+    }
+
+    async function enableNotifications() {
+      if (!("Notification" in window)) return;
+      const permission = await Notification.requestPermission();
+      updateNotificationStatusText();
+      if (permission === "granted") {
+        new Notification("Нагадувач увімкнено", {
+          body: "Тепер ти отримуватимеш сповіщення про важливі дати."
+        });
+      }
+    }
+
+    function sendNotification(title, body) {
+      if (Notification.permission === "granted") {
+        new Notification(title, { body });
+      }
+    }
+
+    function buildReminderText(event) {
+      let prefix = "";
+      if (event.diffDays === 0) prefix = "Сьогодні";
+      else if (event.diffDays === 1) prefix = "Завтра";
+      else if (event.diffDays === 2) prefix = "Через 2 дні";
+
+      let anniversaryText = event.anniversary !== null && event.anniversary >= 0 
+        ? ` (${event.anniversary}-а річниця)` 
+        : "";
+
+      return `${prefix}: ${event.title}${anniversaryText}`;
+    }
+
+    function checkEvents(forceNotify = false) {
+      const sortedEvents = getSortedEvents();
+      renderLists(sortedEvents);
+      updateCounters(sortedEvents);
+
+      const urgent = sortedEvents.filter(e => e.diffDays <= 2);
+      const messages = urgent.map(buildReminderText);
+      showAlert(messages);
+
+      const notificationKey = `notified_${new Date().getFullYear()}_${new Date().getMonth()+1}_${new Date().getDate()}`;
+      const alreadyNotified = localStorage.getItem(notificationKey);
+
+      if ((forceNotify || !alreadyNotified) && urgent.length && Notification.permission === "granted") {
+        urgent.forEach(event => {
+          let body = "";
+          if (event.diffDays === 0) body = `Подія сьогодні: ${formatDate(event.day, event.month)}`;
+          else if (event.diffDays === 1) body = `Подія завтра: ${formatDate(event.day, event.month)}`;
+          else if (event.diffDays === 2) body = `Подія через 2 дні: ${formatDate(event.day, event.month)}`;
+
+          sendNotification(event.title, body);
+        });
+
+        playBeep();
+        localStorage.setItem(notificationKey, "1");
+        statusText.textContent = `Знайдено ${urgent.length} термінових нагадувань`;
+      } else if (urgent.length) {
+        statusText.textContent = `Знайдено ${urgent.length} термінових нагадувань`;
+      } else {
+        statusText.textContent = "На найближчі дні немає термінових нагадувань";
+      }
+    }
+
+    // === СЛУХАЧІ ПОДІЙ ===
+    document.getElementById("enableNotificationsBtn").addEventListener("click", enableNotifications);
+    document.getElementById("checkNowBtn").addEventListener("click", () => {
+      localStorage.removeItem(`notified_${new Date().getFullYear()}_${new Date().getMonth()+1}_${new Date().getDate()}`);
+      checkEvents(true);
+    });
+    document.getElementById("testSoundBtn").addEventListener("click", playBeep);
+
+    document.getElementById("addEventBtn").addEventListener("click", () => {
+      addModal.classList.remove("hidden");
+      addForm.reset();
+    });
+
+    document.getElementById("cancelAdd").addEventListener("click", () => {
+      addModal.classList.add("hidden");
+    });
+
+    addForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newEvent = {
+        title: document.getElementById("titleInput").value.trim(),
+        day: parseInt(document.getElementById("dayInput").value),
+        month: parseInt(document.getElementById("monthInput").value),
+        startYear: document.getElementById("startYearInput").value ? parseInt(document.getElementById("startYearInput").value) : null
+      };
+      customEvents.push(newEvent);
+      localStorage.setItem("customEvents", JSON.stringify(customEvents));
+      addModal.classList.add("hidden");
+      checkEvents(false);
+    });
+
+    searchInput.addEventListener("input", (e) => {
+      searchTerm = e.target.value.trim();
+      checkEvents(false);
+    });
+
+    // Install prompt
+    window.addEventListener("beforeinstallprompt", (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      installBtn.classList.remove("hidden");
+    });
+
+    installBtn.addEventListener("click", async () => {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") installBtn.classList.add("hidden");
+      deferredPrompt = null;
+    });
+
+    // === ЗАПУСК ===
+    function init() {
+      updateNotificationStatusText();
+      checkEvents(false);
+
+      setInterval(() => checkEvents(false), 60000);
+
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.register("./service-worker.js");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
