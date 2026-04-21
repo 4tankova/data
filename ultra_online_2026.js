@@ -1,72 +1,55 @@
-// ====================== ULTRA ONLINE 2026 FIX ======================
-// Спрощена та стабільна версія для Lampa 2026
+// ====================== ULTRA ONLINE SIMPLE 2026 ======================
+// Найпростіша робоча версія — просто відкриває OnlyModels + Online_Mod
 
 (function() {
     'use strict';
 
-    const plugin = {
-        name: "Ultra Online 2026",
-        version: "1.1-fix",
-        description: "Потужний агрегатор онлайн-джерел (OnlyModels + інші)",
-        
-        init: function() {
-            console.log('%c✅ Ultra Online 2026 FIX завантажено успішно!', 'color:#00ff9d; font-size:15px;');
+    console.log('%c✅ Ultra Online Simple 2026 завантажено!', 'color:#00ff9d; font-size:16px; font-weight:bold');
 
-            // Додаємо джерело в меню "Онлайн"
-            if (Lampa && Lampa.Settings && Lampa.Settings.addSource) {
-                Lampa.Settings.addSource({
-                    name: 'Ultra Online 2026',
-                    icon: '🔥',
-                    onSelect: function() {
-                        Lampa.Activity.push({
-                            component: 'ultra_online_activity',
-                            title: 'Ultra Online 2026',
-                            object: {}
-                        });
-                    }
-                });
-            }
+    // Головна функція — шукати онлайн
+    function openUltraOnline() {
+        const card = Lampa.Activity.active();
+        let title = '';
 
-            // Додаємо кнопку "Ultra Online" при перегляді фільму
-            Lampa.Listener.send('app', 'add_button', {
-                name: 'ultra_online',
-                title: '▶ Ultra Online',
-                icon: '🔥',
-                onSelect: function(movie) {
-                    if (movie && movie.title) {
-                        searchInUltraOnline(movie.title);
-                    } else {
-                        Lampa.Noty.show('Не вдалося отримати назву фільму');
-                    }
-                }
-            });
+        if (card && card.object) {
+            title = card.object.title || card.object.name || '';
         }
-    };
 
-    // Функція пошуку
-    function searchInUltraOnline(title) {
-        Lampa.Noty.show('🔍 Шукаємо "' + title + '" у Ultra Online...');
+        if (!title) {
+            Lampa.Noty.show('Не вдалося визначити назву фільму 😕');
+            return;
+        }
 
-        // Основні джерела
-        const sources = [
-            'https://onlymodels.icu/p?search=' + encodeURIComponent(title),
-            'https://nb557.github.io/plugins/online_mod.js?search=' + encodeURIComponent(title)
-        ];
+        Lampa.Noty.show(`🔍 Шукаємо "${title}" в Ultra Online...`);
 
-        // Відкриваємо перше джерело (можна розширити)
-        window.open(sources[0], '_blank');
+        // Відкриваємо OnlyModels з пошуком
+        const searchUrl = `https://onlymodels.icu/p?search=${encodeURIComponent(title)}`;
+        window.open(searchUrl, '_blank');
 
-        // Повідомлення користувачу
+        // Через 1 секунду пропонуємо Online_Mod
         setTimeout(() => {
-            Lampa.Noty.show('✅ Відкрито OnlyModels. Якщо потрібно більше джерел — додай Online_Mod окремо.');
-        }, 1500);
+            if (confirm('Хочеш також відкрити Online_Mod?')) {
+                window.open(`https://nb557.github.io/plugins/online_mod.js?search=${encodeURIComponent(title)}`, '_blank');
+            }
+        }, 1200);
     }
 
-    // Реєстрація плагіна (правильний спосіб для більшості версій Lampa)
-    if (typeof Lampa !== 'undefined' && Lampa.Plugin) {
-        Lampa.Plugin.add(plugin);
-    } else if (typeof window !== 'undefined') {
-        window.UltraOnlinePlugin = plugin;
-        console.log('Плагін готовий. Додай його в Lampa і перезапусти додаток.');
+    // Додаємо кнопку в картку фільму (найнадійніший спосіб)
+    Lampa.Listener.send('card', 'add_button', {
+        name: 'ultra_online_btn',
+        title: '🔥 Ultra Online',
+        icon: '🔥',
+        onSelect: openUltraOnline
+    });
+
+    // Також додаємо в меню розширень
+    if (Lampa.Settings && Lampa.Settings.addSource) {
+        Lampa.Settings.addSource({
+            name: 'Ultra Online Simple',
+            icon: '🔥',
+            onSelect: openUltraOnline
+        });
     }
+
+    console.log('Кнопка "Ultra Online" додана — відкривай будь-який фільм і шукай кнопку!');
 })();
