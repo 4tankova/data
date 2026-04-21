@@ -1,116 +1,74 @@
-// === МОЙ ULTRA BALANCERS 2026 ===
-// Universal Parser + багато онлайн-балансерів
+// === МОЙ ULTRA ONLINE 2026 (під 4tankova.github.io) ===
 
 (function () {
     'use strict';
-    if (window.__my_ultra_balancers_plugin__) return;
-    window.__my_ultra_balancers_plugin__ = true;
+    if (window.__my_ultra_online_2026__) return;
+    window.__my_ultra_online_2026__ = true;
 
-    var PLUGIN_NAME = 'Мій Ultra Balancers';
-    var PLUGIN_CODE = 'my_ultra_balancers';
-    var PLUGIN_VERSION = '1.2';
+    var PLUGIN_NAME = 'Ultra Online 2026';
+    var PLUGIN_CODE = 'ultra_online_2026';
 
-    var CONFIG = {
-        mode: 'direct', // 'direct' — без proxy
-        ui: {
-            sourceName: 'ultra_balancers'
-        },
-        balancers: [
-            { name: "OnlyModels", base: "https://onlymodels.icu" },
-            { name: "Online_Mod", base: "https://nb557.github.io/plugins" },
-            { name: "BWA Cloud", base: "https://bwa.to" },
-            { name: "Prestige", base: "https://bwa.to/plugins" },
-            { name: "Alloha", base: "https://alloha.tv" },
-            { name: "Kinobase", base: "https://kinobase.org" },
-            { name: "Rezka", base: "https://rezka.ag" },
-            { name: "Filmix", base: "https://filmix.my" },
-            { name: "Showy Online", base: "http://showy.online" }
-        ]
-    };
+    console.log('%c🔥 Ultra Online 2026 (4tankova) завантажено!', 'color:#00ff9d; font-size:16px; font-weight:bold');
 
-    function log(msg) {
-        console.log('%c[' + PLUGIN_CODE + '] ' + msg, 'color:#00ff9d');
-    }
-
-    function getCurrentTitle() {
-        var act = Lampa.Activity.active ? Lampa.Activity.active() : null;
+    function getTitle() {
+        var act = Lampa.Activity && Lampa.Activity.active ? Lampa.Activity.active() : null;
         if (act && act.object) {
             return act.object.title || act.object.name || act.object.original_title || '';
         }
         return '';
     }
 
-    function searchInBalancers(title) {
+    function openUltra2026() {
+        var title = getTitle();
+
         if (!title) {
-            title = prompt('Введіть назву фільму/серіалу:');
+            title = prompt('Введіть назву фільму / серіалу:');
             if (!title) return;
         }
 
-        Lampa.Noty.show('🔍 Шукаю в Ultra Balancers: ' + title, 5000);
+        Lampa.Noty.show(`🔍 Ultra Online 2026: ${title}`, 5000);
 
-        // Відкриваємо основні балансери з пошуком
-        var urls = CONFIG.balancers.map(function(b) {
-            return b.base + (b.base.includes('?') ? '&' : '?') + 'search=' + encodeURIComponent(title);
-        });
+        // Завантажуємо твій основний файл
+        window.open('https://4tankova.github.io/data/ultra_online_2026.js?search=' + encodeURIComponent(title), '_blank');
 
-        // Відкриваємо перший (OnlyModels) відразу
-        window.open(urls[0], '_blank');
+        // Додатково відкриваємо OnlyModels напряму
+        setTimeout(() => {
+            window.open('https://onlymodels.icu/p?search=' + encodeURIComponent(title), '_blank');
+        }, 700);
 
-        // Інші — через невелику затримку (щоб не заблокували)
-        setTimeout(function() {
-            if (confirm('Відкрити ще ' + (CONFIG.balancers.length - 1) + ' балансерів?')) {
-                urls.slice(1, 5).forEach(function(url, i) {
-                    setTimeout(function() {
-                        window.open(url, '_blank');
-                    }, i * 800);
-                });
-            }
-        }, 1200);
+        setTimeout(() => {
+            window.open('https://onlymodels.icu/lite/withsearch?search=' + encodeURIComponent(title), '_blank');
+        }, 1400);
 
-        log('Пошук запущено для: ' + title);
-    }
-
-    // Реєстрація плагіна
-    function register() {
-        log('Плагін завантажено v' + PLUGIN_VERSION);
-
-        // Додаємо в меню розширень
-        if (Lampa.Settings && Lampa.Settings.addSource) {
-            Lampa.Settings.addSource({
-                name: '🔥 ' + PLUGIN_NAME,
-                icon: '🔥',
-                onSelect: function() {
-                    var title = getCurrentTitle();
-                    searchInBalancers(title);
-                }
-            });
+        // Завантажуємо nws-client
+        if (!document.getElementById('nws-client-ultra')) {
+            var s = document.createElement('script');
+            s.id = 'nws-client-ultra';
+            s.src = 'https://onlymodels.icu/js/nws-client-es5.js?v18112025';
+            document.head.appendChild(s);
         }
-
-        // Додаємо кнопку в картку фільму
-        if (Lampa.Listener) {
-            Lampa.Listener.send('card', 'add_button', {
-                name: PLUGIN_CODE,
-                title: '🔥 Ultra Balancers',
-                icon: '🔥',
-                onSelect: function() {
-                    var title = getCurrentTitle();
-                    searchInBalancers(title);
-                }
-            });
-        }
-
-        // Глобальна функція на всяк випадок
-        window.openUltraBalancers = searchInBalancers;
-
-        log('Кнопка та пункт меню додані. Відкрий фільм і натисни кнопку 🔥 Ultra Balancers');
     }
 
-    if (window.appready) register();
-    else if (Lampa.Listener) {
-        Lampa.Listener.follow('app', function(e) {
-            if (e.type === 'ready') register();
+    // Додаємо кнопку в картку фільму
+    if (Lampa && Lampa.Listener) {
+        Lampa.Listener.send('card', 'add_button', {
+            name: PLUGIN_CODE,
+            title: '🔥 Ultra Online 2026',
+            icon: '🔥',
+            onSelect: openUltra2026
         });
-    } else {
-        setTimeout(register, 3000); // fallback
     }
+
+    // Додаємо в меню розширень
+    if (Lampa && Lampa.Settings && Lampa.Settings.addSource) {
+        Lampa.Settings.addSource({
+            name: '🔥 Ultra Online 2026',
+            icon: '🔥',
+            onSelect: openUltra2026
+        });
+    }
+
+    window.openUltraOnline2026 = openUltra2026;
+
+    console.log('✅ Плагін готовий. Відкрий фільм — має з’явитися кнопка "Ultra Online 2026"');
 })();
